@@ -56,6 +56,24 @@ public class MarketingCustomerViewHandler {
     }
 
     @StreamListener(KafkaProcessor.INPUT)
+    public void whenJoinOrderCompleted_then_UPDATE_(@Payload JoinOrderCompleted joinOrderCompleted) {
+        try {
+            if (joinOrderCompleted.isMe()) {
+                // view 객체 조회
+                List<MarketingCustomer> marketingCustomerList = marketingCustomerRepository.findByOrderId(joinOrderCompleted.getId());
+                for(MarketingCustomer marketingCustomer : marketingCustomerList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    marketingCustomer.setStatus(joinOrderCompleted.getStatus());
+                    // view 레파지 토리에 save
+                    marketingCustomerRepository.save(marketingCustomer);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @StreamListener(KafkaProcessor.INPUT)
     public void whenRecommended_then_UPDATE_(@Payload Recommended recommended) {
         try {
             if (recommended.isMe()) {
