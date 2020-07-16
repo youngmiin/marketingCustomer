@@ -18,15 +18,16 @@ public class MarketingCustomerViewHandler {
     @Autowired
     private MarketingCustomerRepository marketingCustomerRepository;
 
+
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenInfoRegistrated_then_CREATE_ (@Payload InfoRegistrated infoRegistrated) {
+    public void whenInfoJoinOrdered_then_CREATE_ (@Payload JoinOrdered JoinOrdered) {
         try {
-            if (infoRegistrated.isMe()) {
+            if (JoinOrdered.isMe()) {
                 // view 객체 생성
                 MarketingCustomer marketingCustomer = new MarketingCustomer();
                 // view 객체에 이벤트의 Value 를 set 함
-                marketingCustomer.setOrderId(infoRegistrated.getOrderId());
-                marketingCustomer.setCustomerId(infoRegistrated.getCustomerId());
+                marketingCustomer.setOrderId(JoinOrdered.getId());
+                marketingCustomer.setCustomerId(JoinOrdered.getCustomerId());
                 // view 레파지 토리에 save
                 marketingCustomerRepository.save(marketingCustomer);
             }
@@ -35,6 +36,24 @@ public class MarketingCustomerViewHandler {
         }
     }
 
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenInstallationAccepted_then_UPDATE_(@Payload InstallationAccepted InstallationAccepted) {
+        try {
+            if (InstallationAccepted.isMe()) {
+                // view 객체 조회
+                List<MarketingCustomer> marketingCustomerList = marketingCustomerRepository.findByOrderId(InstallationAccepted.getOrderId());
+                for(MarketingCustomer marketingCustomer : marketingCustomerList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    marketingCustomer.setStatus(InstallationAccepted.getStatus());
+                    // view 레파지 토리에 save
+                    marketingCustomerRepository.save(marketingCustomer);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
     @StreamListener(KafkaProcessor.INPUT)
     public void whenRecommended_then_UPDATE_(@Payload Recommended recommended) {
